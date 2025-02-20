@@ -5,6 +5,8 @@ import Swal from "sweetalert2";
 import { updateProfile } from "firebase/auth";
 import axios from "axios";
 
+import login from '/login.jpg'
+
 const Register = () => {
     const { newUser } = useContext(AuthContext);
     const navigate = useNavigate();
@@ -64,7 +66,10 @@ const Register = () => {
 
     return (
         <div className="hero bg-base-200 min-h-screen">
-            <div className="hero-content flex-col lg:flex-row-reverse">
+            <div className="hero-content ">
+                <div className="w-[600px]">
+                    <img className="w-fit rounded-2xl h-[450px]" src={login} alt="" />
+                </div>
                 <div className="card bg-base-100 w-full max-w-sm shrink-0 shadow-2xl">
                     <h1 className="text-3xl font-bold text-center mt-5">Register now!</h1>
                     <form onSubmit={handleOnSubmit} className="card-body">
