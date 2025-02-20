@@ -2,38 +2,55 @@ import { useContext } from "react";
 import { AuthContext } from "../../AuthProvider/AuthProvider";
 import { Link, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import { updateProfile } from "firebase/auth";
+import axios from "axios";
 
 const Register = () => {
     const { newUser } = useContext(AuthContext);
-const navigate = useNavigate();
-    const handleOnSubmit = (e) => {
+    const navigate = useNavigate();
+
+    const handleOnSubmit = async (e) => {
         e.preventDefault();
         const name = e.target.name.value;
         const email = e.target.email.value;
         const password = e.target.password.value;
 
-        newUser(email, password)
-            .then((res) => {
-                Swal.fire({
-                    position: "top-end",
-                    icon: "success",
-                    title: "successful register",
-                    showConfirmButton: false,
-                    timer: 1500
-                  });
-                console.log(res);
-                e.target.reset();
-                navigate('/')
-            })
-            .catch((err) => {
-                Swal.fire({
-                    position: "top-end",
-                    icon: "error",
-                    title: err.message ||"Unsuccessful register",
-                    showConfirmButton: false,
-                    timer: 1500
-                  });
+        try {
+            const res = await newUser(email, password);
+
+            // Update user profile
+            await updateProfile(res.user, { displayName: name });
+
+            // Create user data object
+            const data = {
+                name: res.user.displayName, // or just use `name`
+                email: res.user.email,
+                uid: res.user.uid,
+            };
+
+            // Send user data to backend
+            await axios.post("http://localhost:5000/user", data);
+
+            // Show success message
+            Swal.fire({
+                position: "top-end",
+                icon: "success",
+                title: "Successful registration",
+                showConfirmButton: false,
+                timer: 1500,
             });
+
+            e.target.reset();
+            navigate("/");
+        } catch (err) {
+            Swal.fire({
+                position: "top-end",
+                icon: "error",
+                title: err.message || "Unsuccessful registration",
+                showConfirmButton: false,
+                timer: 1500,
+            });
+        }
     };
 
     return (
