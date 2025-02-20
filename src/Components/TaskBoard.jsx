@@ -37,24 +37,26 @@ const TaskBoard = () => {
   // Add Task Function
   const addTask = () => {
     const title = prompt("Enter task title:");
-    const description = prompt("Enter task description:");
-    if (title && description) {
-      const newTask = {
-        title,
-        description,
-        status: "To-Do",
-        userId: user.uid
-      };
-      axios.post(`http://localhost:5000/tasks`, newTask)
-        .then(res => {
-          setTasks([...tasks, res.data]);
-          toast.success("Task Added!");
-        })
-        .catch(err => {
-          console.error(err);
-          toast.error("Failed to add task.");
-        });
+    if (!title || title.length > 50) {
+      toast.error("Title is required and must be less than 50 characters.");
+      return;
     }
+    const description = prompt("Enter task description (optional):");
+    const newTask = {
+      title,
+      description,
+      status: "To-Do",
+      userId: user.uid
+    };
+    axios.post(`http://localhost:5000/tasks`, newTask)
+      .then(res => {
+        setTasks([...tasks, res.data]);
+        toast.success("Task Added!");
+      })
+      .catch(err => {
+        console.error(err);
+        toast.error("Failed to add task.");
+      });
   };
 
   // Delete Task Function
@@ -75,24 +77,29 @@ const TaskBoard = () => {
   // Edit Task Function
   const editTask = (taskId) => {
     const title = prompt("Edit task title:");
-    const description = prompt("Edit task description:");
+    const description = prompt("Edit task description (optional):");
     
-    if (title && description) {
-      axios.patch(`http://localhost:5000/tasks/${taskId}`, { title, description })
-        .then(res => {
-          if (res.data.modifiedCount > 0) {
-            setTasks(tasks.map(task => 
-              task._id === taskId ? { ...task, title, description } : task
-            ));
-            toast.success("Task Updated!");
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          toast.error("Failed to update task.");
-        });
+    if (!title || title.length > 50) {
+      toast.error("Title is required and must be less than 50 characters.");
+      return;
     }
+    
+    // Use PATCH if you're partially updating the task
+    axios.patch(`http://localhost:5000/tasks/${taskId}`, { title, description })
+      .then(res => {
+        if (res.data.modifiedCount > 0) {
+          setTasks(tasks.map(task => 
+            task._id === taskId ? { ...task, title, description } : task
+          ));
+          toast.success("Task Updated!");
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        toast.error("Failed to update task.");
+      });
   };
+  
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -162,12 +169,14 @@ const TaskCard = ({ task, deleteTask, editTask }) => {
   return (
     <div 
       ref={drag} 
-      className={`p-3 rounded-lg shadow-md bg-white cursor-grab mb-2 ${isDragging ? "opacity-50" : ""}`}
-      title={task.description} // Tooltip for description
+      className={`border p-3 rounded-md mb-2 shadow ${isDragging ? "bg-gray-200" : "bg-white"}`}
     >
-      {task.title}
-      <button onClick={() => editTask(task._id)} className="ml-2 text-blue-500">✏️</button>
-      <button onClick={() => deleteTask(task._id)} className="ml-2 text-red-500">🗑️</button>
+      <h4 className="font-bold">{task.title}</h4>
+      {task.description && <p>{task.description}</p>}
+      <div className="flex justify-between mt-2">
+        <button onClick={() => editTask(task._id)} className="text-blue-500 hover:underline">Edit</button>
+        <button onClick={() => deleteTask(task._id)} className="text-red-500 hover:underline">Delete</button>
+      </div>
     </div>
   );
 };
