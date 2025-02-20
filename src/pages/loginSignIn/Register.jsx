@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { AuthContext } from "../../AuthProvider/AuthProvider";
 import { Link, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -8,12 +8,15 @@ import axios from "axios";
 const Register = () => {
     const { newUser } = useContext(AuthContext);
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(false); // Loading state
 
     const handleOnSubmit = async (e) => {
         e.preventDefault();
         const name = e.target.name.value;
         const email = e.target.email.value;
         const password = e.target.password.value;
+
+        setLoading(true); // Start loading
 
         try {
             const res = await newUser(email, password);
@@ -23,13 +26,17 @@ const Register = () => {
 
             // Create user data object
             const data = {
-                name: res.user.displayName, // or just use `name`
+                name: res.user.displayName,
                 email: res.user.email,
                 uid: res.user.uid,
             };
 
-            // Send user data to backend
-            await axios.post("http://localhost:5000/user", data);
+            // Send user data to backend and receive JWT
+            const response = await axios.post("http://localhost:5000/user", data);
+            const { token } = response.data;
+
+            // Store the JWT in local storage
+            localStorage.setItem('jwt', token);
 
             // Show success message
             Swal.fire({
@@ -50,6 +57,8 @@ const Register = () => {
                 showConfirmButton: false,
                 timer: 1500,
             });
+        } finally {
+            setLoading(false); // Stop loading
         }
     };
 
@@ -78,7 +87,9 @@ const Register = () => {
                             <input name="password" type="password" placeholder="password" className="input input-bordered" required />
                         </div>
                         <div className="form-control mt-6">
-                            <button className="btn btn-primary">Register</button>
+                            <button className="btn btn-primary" disabled={loading}>
+                                {loading ? "Registering..." : "Register"}
+                            </button>
                         </div>
                     </form>
                     <p className="text-center font-medium py-5">
